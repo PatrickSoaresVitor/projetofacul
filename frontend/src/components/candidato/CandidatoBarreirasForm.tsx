@@ -13,19 +13,55 @@ export default function CandidatoBarreirasForm({ candidatoId, subtipo }: Props) 
   const [ok, setOk] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  useEffect(() => {
-    api.listarBarreirasPorSubtipo(subtipo.id)
-      .then((b) => setBarreiras(b.barreiras || []))
-      .catch((e) => setErro(e.message));
-  }, [subtipo.id]);
-
-  async function handleSalvar() {
-    if (!selecionadas.length) {
-      setErro("Selecione pelo menos uma barreira.");
-      return;
-    }
+  // 1️⃣ Carrega todas as barreiras POSSÍVEIS desse subtipo
+  async function carregarBarreirasDoSubtipo() {
     try {
-      await api.vincularBarreirasACandidato(candidatoId, subtipo.id, selecionadas);
+      const b = await api.listarBarreirasPorSubtipo(subtipo.id);
+      setBarreiras(b.barreiras || []);
+    } catch (e: any) {
+      setErro(e.message);
+    }
+  }
+
+  // 2️⃣ Carrega as barreiras que o CANDIDATO já tem para este subtipo
+  async function carregarSelecionadas() {
+    try {
+      const dados = await api.listarBarreirasCandidato(candidatoId);
+
+      // Não sabemos o shape exato, então vamos ser defensivos:
+      // procurar pelo subtipo correspondente e pegar sua lista de barreiras
+      const registro = (dados as any[]).find((item) => {
+        // tenta bater por subtipoId direto ou por item.subtipo.id
+        return item.subtipoId === subtipo.id || item.subtipo?.id === subtipo.id;
+      });
+
+      const ids =
+        registro?.barreiras?.map((b: Barreira) => b.id) ??
+        registro?.subtipo?.barreiras?.map((b: Barreira) => b.id) ??
+        [];
+
+      setSelecionadas(ids);
+    } catch (e: any) {
+      setErro(e.message);
+    }
+  }
+
+  useEffect(() => {
+    carregarBarreirasDoSubtipo();
+    carregarSelecionadas();
+  }, [candidatoId, subtipo.id]);
+
+  // 3️⃣ Salvar = PUT (substitui tudo; permite zerar)
+  async function handleSalvar() {
+    setErro(null);
+    setOk(false);
+
+    try {
+      await api.salvarBarreirasDoSubtipo(
+        candidatoId,
+        subtipo.id,
+        selecionadas
+      );
       setOk(true);
     } catch (err: any) {
       setErro(err.message ?? "Erro ao salvar barreiras");
@@ -45,7 +81,7 @@ export default function CandidatoBarreirasForm({ candidatoId, subtipo }: Props) 
       </h3>
 
       {erro && <p className="text-red-600">{erro}</p>}
-      {ok && <p className="text-green-600">Barreiras salvas!</p>}
+      {ok && <p className="text-green-600">Barreiras atualizadas!</p>}
 
       <div className="max-h-60 overflow-y-auto space-y-2">
         {barreiras.map((b) => (

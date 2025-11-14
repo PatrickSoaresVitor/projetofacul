@@ -13,22 +13,49 @@ export default function CandidatoSubtiposForm({ candidatoId, onUpdated }: Props)
   const [ok, setOk] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  useEffect(() => {
-    api.listarSubtipos().then(setSubtipos).catch((e) => setErro(e.message));
-  }, []);
+  // Carrega TODOS os subtipos existentes
+  async function carregarSubtipos() {
+    try {
+      const lista = await api.listarSubtipos();
+      setSubtipos(lista);
+    } catch (e: any) {
+      setErro(e.message);
+    }
+  }
 
+  // Carrega os subtipos que o candidato JÁ TEM
+  async function carregarSelecionados() {
+  try {
+    const perfil = await api.getCandidato(candidatoId);
+
+    const ids =
+      (perfil.subtipos ?? [])
+        .map((s: any) => s?.subtipo?.id as number | undefined)
+        .filter((id): id is number => typeof id === "number" && Number.isInteger(id));
+
+    setSelecionados(ids);
+  } catch (e: any) {
+    setErro(e.message);
+  }
+}
+
+
+  useEffect(() => {
+    carregarSubtipos();
+    carregarSelecionados();
+  }, [candidatoId]);
+
+  // Salvar usando PUT (sobrescreve tudo)
   async function handleSalvar() {
     setErro(null);
-    if (!selecionados.length) {
-      setErro("Selecione pelo menos um subtipo.");
-      return;
-    }
+    setOk(false);
+
     try {
-      await api.vincularSubtiposACandidato(candidatoId, selecionados);
+      await api.salvarSubtiposDoCandidato(candidatoId, selecionados);
       setOk(true);
       onUpdated();
     } catch (err: any) {
-      setErro(err.message ?? "Erro ao vincular subtipos");
+      setErro(err.message ?? "Erro ao salvar subtipos");
     }
   }
 
@@ -41,8 +68,9 @@ export default function CandidatoSubtiposForm({ candidatoId, onUpdated }: Props)
   return (
     <div className="card space-y-3">
       <h3 className="text-lg font-semibold">Selecione seus subtipos</h3>
+
       {erro && <p className="text-red-600">{erro}</p>}
-      {ok && <p className="text-green-600">Subtipos atualizados!</p>}
+      {ok && <p className="text-green-600">Subtipos atualizados com sucesso!</p>}
 
       <div className="max-h-60 overflow-y-auto space-y-2">
         {subtipos.map((s) => (

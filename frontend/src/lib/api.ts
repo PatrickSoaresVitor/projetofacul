@@ -111,16 +111,37 @@ obterVagaComSubtipos(vagaId: number) {
   return http<{ barreiras: Barreira[] }>(`/subtipos/${subtipoId}`);
   },
  vincularSubtiposACandidato(candidatoId: number, subtipoIds: number[]) {
-    return http(`/candidatos/${candidatoId}/subtipos`, {
+    return http<void>(`/candidatos/${candidatoId}/subtipos`, {
       method: "POST",
       body: JSON.stringify({ subtipoIds }),
     });
   },
   vincularBarreirasACandidato(candidatoId: number, subtipoId: number, barreiraIds: number[]) {
-    return http(`/candidatos/${candidatoId}/subtipos/${subtipoId}/barreiras`, {
+    return http<void>(`/candidatos/${candidatoId}/subtipos/${subtipoId}/barreiras`, {
       method: "POST",
       body: JSON.stringify({ barreiraIds }),
     });
+  },
+
+  salvarSubtiposDoCandidato(candidatoId: number, subtipoIds: number[]) {
+    return http<void>(`/candidatos/${candidatoId}/subtipos`, {
+      method: "PUT",
+      body: JSON.stringify({ subtipoIds }),
+    });
+  },
+
+  salvarBarreirasDoSubtipo(
+    candidatoId: number,
+    subtipoId: number,
+    barreiraIds: number[]
+  ) {
+    return http<void>(
+      `/candidatos/${candidatoId}/subtipos/${subtipoId}/barreiras`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ barreiraIds }),
+      }
+    );
   },
 
   async listarVagasCompativeis(candidatoId: number): Promise<Vaga[]> {
@@ -156,10 +177,10 @@ obterVagaComSubtipos(vagaId: number) {
       body: JSON.stringify({ nome, email, senha, escolaridade, cpf }),
     });
   },
-  authLogin(role: "empresa" | "candidato" | "admin", login: string, senha: string) {
-  return http<{ role: string; user: { id: number; nome: string } }>("/auth/login", {
+  authLogin(email: string, senha: string) {
+  return http<{ role: "empresa" | "candidato" | "admin"; user: { id: number; nome: string } }>("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ role, login, senha }),
+    body: JSON.stringify({ email, senha }),
   });
   },
   candidatarVaga(candidatoId: number, vagaId: number) {
@@ -170,6 +191,13 @@ obterVagaComSubtipos(vagaId: number) {
   },
   listarCandidaturas(candidatoId: number) {
   return http<VagaCandidato[]>(`/candidatos/${candidatoId}/candidaturas`);
-},
+
+  },
+  // Barreiras atuais do candidato por subtipo
+  listarBarreirasCandidato(candidatoId: number) {
+    // o tipo é any[] porque não sabemos exatamente o shape,
+    // mas vamos tratar isso no componente
+    return http<any[]>(`/candidatos/${candidatoId}/subtipos/barreiras`);
+  },
 
 };

@@ -12,9 +12,12 @@ router.get("/:id", CandidatosController.buscarPorId);
 
 router.get("/:id/subtipos", CandidatoSubtiposController.listar);
 router.post("/:id/subtipos", CandidatoSubtiposController.vincular);
+router.put("/:id/subtipos", CandidatoSubtiposController.salvarLista);
 
 router.get("/:id/subtipos/barreiras", CandidatoSubtipoBarreirasController.listar);
 router.post("/:id/subtipos/:subtipoId/barreiras", CandidatoSubtipoBarreirasController.vincular);
+router.put("/:id/subtipos/:subtipoId/barreiras", CandidatoSubtipoBarreirasController.salvarLista
+);
 router.get("/:id/candidaturas", listarCandidaturas);
 
 export default router;

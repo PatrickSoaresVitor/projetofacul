@@ -51,10 +51,9 @@ export default function CandidatoVagasPage() {
           <nav className="flex flex-wrap gap-2 mb-2">
             <NavLink
               to={`/candidato/${candidatoId}`}
+              end
               className={({ isActive }) =>
-                ["btn text-xs sm:text-sm", isActive ? "btn-primary" : ""].join(
-                  " "
-                )
+                ["btn text-xs sm:text-sm", isActive ? "btn-primary" : ""].join(" ")
               }
             >
               Subtipos e Barreiras
@@ -63,9 +62,7 @@ export default function CandidatoVagasPage() {
             <NavLink
               to={`/candidato/${candidatoId}/vagas`}
               className={({ isActive }) =>
-                ["btn text-xs sm:text-sm", isActive ? "btn-primary" : ""].join(
-                  " "
-                )
+                ["btn text-xs sm:text-sm", isActive ? "btn-primary" : ""].join(" ")
               }
             >
               Minhas vagas
