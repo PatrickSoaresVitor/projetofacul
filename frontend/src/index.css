@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ====== Configuração global ====== */
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #0f172a;
+  background-color: #e2e8f0; /* slate-200 */
+}
+
+body {
+  @apply bg-slate-100 text-slate-900;
+}
+
+#root {
+  @apply min-h-screen;
+}
+
+a {
+  @apply text-inherit no-underline;
+}
+
+h1{
+  @apply pb-3;
+}
+p{
+  @apply pb-1
+}
+
+
+
+/* Container padrão das páginas */
+.container-page {
+  @apply w-full max-w-5xl mx-auto px-4;
+}
+
+/* ====== Componentes reutilizáveis ====== */
+@layer components {
+  /* Botões genéricos (usados no Login para Empresa/Candidato/Admin) */
+  .btn {
+    @apply inline-flex items-center justify-center
+    px-4 py-2 rounded-lg text-sm font-medium
+    border border-slate-300 bg-white text-slate-700
+    hover:bg-primary-light hover:border-primary hover:text-primary
+    transition shadow-sm;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white border-transparent
+    hover:bg-primary-dark hover:text-white;
+  }
+
+  /* Cards (já usados em Login e em outras telas) */
+  .card {
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4;
+  }
+
+  /* Títulos e descrições de página (para usar em outras telas também) */
+  .page-title {
+    @apply text-2xl font-semibold text-slate-900 ;
+  }
+
+  .page-description {
+    @apply text-sm text-slate-500;
+  }
+
+  /* Labels e inputs (usados no Login) */
+  .label {
+    @apply text-sm font-medium text-slate-700 ;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
+    bg-white
+    focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary;
+  }
+  
+}

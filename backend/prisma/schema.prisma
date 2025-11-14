@@ -1,0 +1,185 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TipoDeficiencia {
+  id        Int                  @id @default(autoincrement())
+  nome      String               @unique
+  subtipos  SubtipoDeficiencia[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+}
+
+model SubtipoDeficiencia {
+  id               Int                @id @default(autoincrement())
+  nome             String
+  tipoId           Int
+  tipo             TipoDeficiencia    @relation(fields: [tipoId], references: [id], onDelete: Cascade)
+  barreiras        SubtipoBarreira[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  VagaSubtipo      VagaSubtipo[]
+  CandidatoSubtipo CandidatoSubtipo[]
+
+  @@unique([tipoId, nome]) // evita subtipo duplicado dentro do mesmo tipo
+}
+
+model Barreira {
+  id              Int                      @id @default(autoincrement())
+  descricao       String                   @unique
+  subtipos        SubtipoBarreira[]
+  acessibilidades BarreiraAcessibilidade[]
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  CandidatoSubtipoBarreira CandidatoSubtipoBarreira[]
+}
+
+model Acessibilidade {
+  id        Int                      @id @default(autoincrement())
+  descricao String                   @unique
+  barreiras BarreiraAcessibilidade[]
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+
+  VagaAcessibilidade VagaAcessibilidade[]
+}
+
+// tabelas de junção explícitas (para fácil evolução)
+model SubtipoBarreira {
+  subtipoId  Int
+  barreiraId Int
+  subtipo    SubtipoDeficiencia @relation(fields: [subtipoId], references: [id], onDelete: Cascade)
+  barreira   Barreira           @relation(fields: [barreiraId], references: [id], onDelete: Cascade)
+
+  @@id([subtipoId, barreiraId])
+  @@index([barreiraId])
+}
+
+model BarreiraAcessibilidade {
+  barreiraId       Int
+  acessibilidadeId Int
+  barreira         Barreira       @relation(fields: [barreiraId], references: [id], onDelete: Cascade)
+  acessibilidade   Acessibilidade @relation(fields: [acessibilidadeId], references: [id], onDelete: Cascade)
+
+  @@id([barreiraId, acessibilidadeId])
+  @@index([acessibilidadeId])
+}
+
+model Empresa {
+  id    Int     @id @default(autoincrement())
+  nome  String
+  cnpj  String? @unique
+  email String? @unique
+  senha String?
+  vagas Vaga[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vaga {
+  id        Int     @id @default(autoincrement())
+  empresaId Int
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  descricao       String
+  escolaridade    String // <- adicionado (ou troque por enum se quiser)
+  subtiposAceitos VagaSubtipo[]
+  acessibilidades VagaAcessibilidade[]
+
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  candidaturas VagaCandidato[]
+}
+
+model VagaSubtipo {
+  vagaId    Int
+  subtipoId Int
+  vaga      Vaga               @relation(fields: [vagaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  subtipo   SubtipoDeficiencia @relation(fields: [subtipoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([vagaId, subtipoId])
+  @@index([subtipoId])
+}
+
+model VagaAcessibilidade {
+  vagaId           Int
+  acessibilidadeId Int
+  vaga             Vaga           @relation(fields: [vagaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  acessibilidade   Acessibilidade @relation(fields: [acessibilidadeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([vagaId, acessibilidadeId])
+  @@index([acessibilidadeId])
+}
+
+model Candidato {
+  id           Int             @id @default(autoincrement())
+  nome         String
+  email        String?         @unique
+  senha        String?
+  cpf          String?         @unique
+  telefone     String?
+  escolaridade String
+  candidaturas VagaCandidato[]
+
+  // Relações
+  subtipos CandidatoSubtipo[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nome])
+}
+
+model VagaCandidato {
+  vagaId      Int
+  candidatoId Int
+  createdAt   DateTime @default(now())
+
+  vaga      Vaga      @relation(fields: [vagaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  candidato Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([vagaId, candidatoId])
+  @@index([candidatoId])
+}
+
+// N:N Candidato <-> Subtipo
+model CandidatoSubtipo {
+  candidatoId Int
+  subtipoId   Int
+  candidato   Candidato          @relation(fields: [candidatoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  subtipo     SubtipoDeficiencia @relation(fields: [subtipoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  barreiras CandidatoSubtipoBarreira[] // relação contextual (por subtipo)
+
+  @@id([candidatoId, subtipoId])
+  @@index([subtipoId])
+}
+
+// N:N contextual (candidato + subtipo) <-> barreira
+model CandidatoSubtipoBarreira {
+  candidatoId Int
+  subtipoId   Int
+  barreiraId  Int
+
+  candidatoSubtipo CandidatoSubtipo @relation(fields: [candidatoId, subtipoId], references: [candidatoId, subtipoId], onDelete: Cascade, onUpdate: Cascade)
+  barreira         Barreira         @relation(fields: [barreiraId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([candidatoId, subtipoId, barreiraId])
+  @@index([barreiraId])
+}
