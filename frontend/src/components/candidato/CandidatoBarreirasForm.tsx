@@ -1,3 +1,4 @@
+// src/components/candidato/CandidatoBarreirasForm.tsx
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import type { Barreira, SubtipoDeficiencia } from "../../types";
@@ -13,7 +14,7 @@ export default function CandidatoBarreirasForm({ candidatoId, subtipo }: Props) 
   const [ok, setOk] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  // 1️⃣ Carrega todas as barreiras POSSÍVEIS desse subtipo
+  // 1) Barreiras possíveis para esse subtipo
   async function carregarBarreirasDoSubtipo() {
     try {
       const b = await api.listarBarreirasPorSubtipo(subtipo.id);
@@ -23,23 +24,17 @@ export default function CandidatoBarreirasForm({ candidatoId, subtipo }: Props) 
     }
   }
 
-  // 2️⃣ Carrega as barreiras que o CANDIDATO já tem para este subtipo
+  // 2) Barreiras JÁ MARCADAS para esse candidato + subtipo
   async function carregarSelecionadas() {
     try {
-      const dados = await api.listarBarreirasCandidato(candidatoId);
+      const perfil = await api.listarBarreirasCandidato(candidatoId);
 
-      // Não sabemos o shape exato, então vamos ser defensivos:
-      // procurar pelo subtipo correspondente e pegar sua lista de barreiras
-      const registro = (dados as any[]).find((item) => {
-        // tenta bater por subtipoId direto ou por item.subtipo.id
-        return item.subtipoId === subtipo.id || item.subtipo?.id === subtipo.id;
-      });
+      // perfil é um array de CandidatoSubtipoBarreira com barreira dentro
+      const registrosDoSubtipo = perfil.filter(
+        (r: any) => r.subtipoId === subtipo.id
+      );
 
-      const ids =
-        registro?.barreiras?.map((b: Barreira) => b.id) ??
-        registro?.subtipo?.barreiras?.map((b: Barreira) => b.id) ??
-        [];
-
+      const ids = registrosDoSubtipo.map((r: any) => r.barreiraId);
       setSelecionadas(ids);
     } catch (e: any) {
       setErro(e.message);
@@ -47,11 +42,13 @@ export default function CandidatoBarreirasForm({ candidatoId, subtipo }: Props) 
   }
 
   useEffect(() => {
+    setOk(false);
+    setErro(null);
     carregarBarreirasDoSubtipo();
     carregarSelecionadas();
-  }, [candidatoId, subtipo.id]);
+  }, [subtipo.id, candidatoId]);
 
-  // 3️⃣ Salvar = PUT (substitui tudo; permite zerar)
+  // 3) Salvar = PUT idempotente
   async function handleSalvar() {
     setErro(null);
     setOk(false);
@@ -69,6 +66,7 @@ export default function CandidatoBarreirasForm({ candidatoId, subtipo }: Props) 
   }
 
   function toggle(id: number) {
+    setOk(false);
     setSelecionadas((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
@@ -84,20 +82,30 @@ export default function CandidatoBarreirasForm({ candidatoId, subtipo }: Props) 
       {ok && <p className="text-green-600">Barreiras atualizadas!</p>}
 
       <div className="max-h-60 overflow-y-auto space-y-2">
-        {barreiras.map((b) => (
-          <label key={b.id} className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={selecionadas.includes(b.id)}
-              onChange={() => toggle(b.id)}
-            />
-            <span>{b.descricao}</span>
-          </label>
-        ))}
+        {barreiras.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            Não há barreiras cadastradas para este subtipo.
+          </p>
+        ) : (
+          barreiras.map((b) => (
+            <label key={b.id} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={selecionadas.includes(b.id)}
+                onChange={() => toggle(b.id)}
+              />
+              <span>{b.descricao}</span>
+            </label>
+          ))
+        )}
       </div>
 
       <div className="flex justify-end">
-        <button onClick={handleSalvar} className="btn btn-primary">
+        <button
+          onClick={handleSalvar}
+          className="btn btn-primary"
+          disabled={barreiras.length === 0}
+        >
           Salvar barreiras
         </button>
       </div>

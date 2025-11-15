@@ -8,6 +8,7 @@ export default function SubtiposPage() {
   const [tipos, setTipos] = useState<TipoComSubtipos[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [excluindoId, setExcluindoId] = useState<number | null>(null);
 
   async function carregar() {
     setErro(null);
@@ -22,7 +23,28 @@ export default function SubtiposPage() {
     }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => {
+    carregar();
+  }, []);
+
+  // 🔹 NOVO: excluir subtipo
+  async function handleExcluirSubtipo(id: number) {
+    const ok = window.confirm(
+      "Tem certeza que deseja excluir este subtipo? Isso remove vínculos com candidatos e vagas."
+    );
+    if (!ok) return;
+
+    try {
+      setErro(null);
+      setExcluindoId(id);
+      await api.excluirSubtipo(id);
+      await carregar();
+    } catch (e: any) {
+      setErro(e.message ?? "Erro ao excluir subtipo");
+    } finally {
+      setExcluindoId(null);
+    }
+  }
 
   return (
     <div className="container-page space-y-6 py-8">
@@ -38,7 +60,11 @@ export default function SubtiposPage() {
       ) : erro ? (
         <div className="card text-red-600">{erro}</div>
       ) : (
-        <SubtipoList tipos={tipos} />
+        <SubtipoList
+          tipos={tipos}
+          onExcluirSubtipo={handleExcluirSubtipo}
+          excluindoId={excluindoId}
+        />
       )}
     </div>
   );

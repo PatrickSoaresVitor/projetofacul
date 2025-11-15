@@ -7,6 +7,8 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
     ...init,
   });
+
+  // Se não deu ok, tenta ler texto e montar mensagem de erro
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     let msg = text || res.statusText || "Erro na requisição";
@@ -16,8 +18,23 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {}
     throw new Error(msg);
   }
-  return res.json() as Promise<T>;
+
+  // 204 = No Content → não tem JSON pra parsear
+  if (res.status === 204) {
+    // ts-expect-error: para endpoints que não retornam nada
+    return undefined as T;
+  }
+
+  // Alguns deletes/rotas podem retornar sem body mesmo com 200
+  const textOk = await res.text();
+  if (!textOk) {
+    // ts-expect-error
+    return undefined as T;
+  }
+
+  return JSON.parse(textOk) as T;
 }
+
 
 
 export const api = {
@@ -108,7 +125,7 @@ obterVagaComSubtipos(vagaId: number) {
   },
     // Barreiras de um subtipo
   listarBarreirasPorSubtipo(subtipoId: number) {
-  return http<{ barreiras: Barreira[] }>(`/subtipos/${subtipoId}`);
+   return http<{ barreiras: Barreira[] }>(`/subtipos/${subtipoId}/barreiras`);
   },
  vincularSubtiposACandidato(candidatoId: number, subtipoIds: number[]) {
     return http<void>(`/candidatos/${candidatoId}/subtipos`, {
@@ -198,6 +215,27 @@ obterVagaComSubtipos(vagaId: number) {
     // o tipo é any[] porque não sabemos exatamente o shape,
     // mas vamos tratar isso no componente
     return http<any[]>(`/candidatos/${candidatoId}/subtipos/barreiras`);
+  },
+
+
+  // --- ADMIN: exclusões ---
+
+    // --- ADMIN: exclusões ---
+
+  excluirTipo(id: number) {
+    return http<void>(`/tipos/${id}`, { method: "DELETE" });
+  },
+
+  excluirSubtipo(id: number) {
+    return http<void>(`/subtipos/${id}`, { method: "DELETE" });
+  },
+
+  excluirBarreira(id: number) {
+    return http<void>(`/barreiras/${id}`, { method: "DELETE" });
+  },
+
+  excluirAcessibilidade(id: number) {
+    return http<void>(`/acessibilidades/${id}`, { method: "DELETE" });
   },
 
 };

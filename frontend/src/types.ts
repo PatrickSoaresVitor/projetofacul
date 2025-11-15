@@ -48,10 +48,10 @@ export type Vaga = {
   escolaridade: string;
   empresa: Empresa;
   subtipos: SubtipoDeficiencia[];
+  acessibilidades?: Acessibilidade[]; // 🔹 adiciona isso
   createdAt?: string;
   updatedAt?: string;
   candidaturas?: VagaCandidato[];
-
 };
 
 export type Candidato = {

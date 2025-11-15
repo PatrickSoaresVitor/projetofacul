@@ -48,34 +48,6 @@ export default function CandidatoVagasPage() {
     <div className="min-h-screen bg-slate-100">
       <div className="container-page space-y-6 py-8">
         <header className="space-y-2">
-          <nav className="flex flex-wrap gap-2 mb-2">
-            <NavLink
-              to={`/candidato/${candidatoId}`}
-              end
-              className={({ isActive }) =>
-                ["btn text-xs sm:text-sm", isActive ? "btn-primary" : ""].join(" ")
-              }
-            >
-              Subtipos e Barreiras
-            </NavLink>
-
-            <NavLink
-              to={`/candidato/${candidatoId}/vagas`}
-              className={({ isActive }) =>
-                ["btn text-xs sm:text-sm", isActive ? "btn-primary" : ""].join(" ")
-              }
-            >
-              Minhas vagas
-            </NavLink>
-
-            <NavLink
-              to={`/`}
-              className="btn text-xs sm:text-sm"
-            >
-              SAIR
-            </NavLink>
-          </nav>
-
           <h1 className="page-title">Vagas compatíveis</h1>
           <p className="page-description">
             Veja as vagas que atendem às suas necessidades de acessibilidade.

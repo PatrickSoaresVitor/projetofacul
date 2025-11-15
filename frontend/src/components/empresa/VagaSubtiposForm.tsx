@@ -1,41 +1,55 @@
+// src/components/empresa/VagaSubtiposForm.tsx
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
-import type { SubtipoDeficiencia } from "../../types";
+import type { SubtipoDeficiencia, Vaga } from "../../types";
 
 type Props = {
   vagaId: number;
-  onUpdated?: () => void; 
+  onUpdated?: () => void;
 };
 
-export default function VagaSubtiposForm({ vagaId, onUpdated  }: Props) {
+export default function VagaSubtiposForm({ vagaId, onUpdated }: Props) {
   const [subtipos, setSubtipos] = useState<SubtipoDeficiencia[]>([]);
   const [selecionados, setSelecionados] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
 
-  async function carregarSubtipos() {
+  async function carregar() {
     try {
-      const data = await api.listarSubtipos(); // GET /subtipos
-      setSubtipos(data); // se backend retorna agrupado por tipo
+      setErro(null);
+      setOk(false);
+
+      // carrega todos os subtipos do sistema
+      const [todosSubtipos, vaga] = await Promise.all([
+        api.listarSubtipos(),
+        api.obterVagaComSubtipos(vagaId),
+      ]);
+
+      setSubtipos(todosSubtipos);
+
+      const v = vaga as Vaga;
+      const jaSelecionados = v.subtipos?.map((s) => s.id) ?? [];
+      setSelecionados(jaSelecionados);
     } catch (err: any) {
       setErro(err.message ?? "Erro ao carregar subtipos");
     }
   }
 
+  useEffect(() => {
+    carregar();
+  }, [vagaId]);
+
   async function handleSalvar() {
     setErro(null);
     setOk(false);
-    if (!selecionados.length) {
-      setErro("Selecione ao menos um subtipo.");
-      return;
-    }
-
     setLoading(true);
+
     try {
+      // agora ele SUBSTITUI a lista inteira (pode inclusive ficar vazia)
       await api.vincularSubtiposAVaga(vagaId, selecionados);
       setOk(true);
-      onUpdated?.(); 
+      onUpdated?.();
     } catch (err: any) {
       setErro(err.message ?? "Erro ao vincular subtipos");
     } finally {
@@ -44,21 +58,17 @@ export default function VagaSubtiposForm({ vagaId, onUpdated  }: Props) {
   }
 
   function toggleSelecionado(id: number) {
-    setSelecionados(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    setSelecionados((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   }
-
-  useEffect(() => {
-    carregarSubtipos();
-  }, []);
 
   return (
     <div className="card space-y-3 shadow-md">
       <h3 className="text-lg font-semibold">Selecionar subtipos para a vaga</h3>
 
       {erro && <p className="text-red-600">{erro}</p>}
-      {ok && <p className="text-green-600">Subtipos vinculados com sucesso!</p>}
+      {ok && <p className="text-green-600">Subtipos atualizados com sucesso!</p>}
 
       <div className="max-h-60 overflow-y-auto space-y-2">
         {subtipos.map((s) => (
@@ -73,7 +83,8 @@ export default function VagaSubtiposForm({ vagaId, onUpdated  }: Props) {
         ))}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center text-xs text-gray-500">
+        <span>Você pode deixar todos desmarcados para remover os subtipos.</span>
         <button
           onClick={handleSalvar}
           disabled={loading}

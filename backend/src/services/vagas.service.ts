@@ -1,57 +1,102 @@
-import { VagasRepo } from "../repositories/vagas.repo";
+// src/services/vagas.service.ts
 import { prisma } from "../repositories/prisma";
 
 export const VagasService = {
   async criarVaga(empresaId: number, descricao: string, escolaridade: string) {
-    if (!empresaId) throw new Error("empresaId é obrigatório");
-    if (!descricao?.trim()) throw new Error("descricao é obrigatória");
-    if (!escolaridade?.trim()) throw new Error("escolaridade é obrigatória");
+    if (!descricao?.trim()) throw new Error("Descrição é obrigatória");
+    if (!escolaridade?.trim()) throw new Error("Escolaridade é obrigatória");
 
-    // valida existência da empresa
-    const empresa = await prisma.empresa.findUnique({ where: { id: empresaId } });
-    if (!empresa) throw new Error("Empresa não encontrada");
-
-    return VagasRepo.create(empresaId, descricao.trim(), escolaridade.trim());
+    return prisma.vaga.create({
+      data: {
+        empresaId,
+        descricao: descricao.trim(),
+        escolaridade: escolaridade.trim(),
+      },
+    });
   },
 
   async vincularSubtipos(vagaId: number, subtipoIds: number[]) {
-    if (!vagaId || !Array.isArray(subtipoIds) || subtipoIds.length === 0) {
-      throw new Error("Informe vagaId e pelo menos um subtipoId");
-    }
-    // valida vaga
-    const vaga = await prisma.vaga.findUnique({ where: { id: vagaId } });
-    if (!vaga) throw new Error("Vaga não encontrada");
+    // zera tudo e recria (idempotente, igual fizemos no candidato)
+    await prisma.vagaSubtipo.deleteMany({ where: { vagaId } });
 
-    return VagasRepo.linkSubtipos(vagaId, subtipoIds);
+    if (!subtipoIds.length) return;
+
+    await prisma.vagaSubtipo.createMany({
+      data: subtipoIds.map((subtipoId) => ({ vagaId, subtipoId })),
+      skipDuplicates: true,
+    });
   },
 
   async vincularAcessibilidades(vagaId: number, acessibilidadeIds: number[]) {
-    if (!vagaId || !Array.isArray(acessibilidadeIds) || acessibilidadeIds.length === 0) {
-      throw new Error("Informe vagaId e pelo menos um acessibilidadeId");
-    }
-    // valida vaga
-    const vaga = await prisma.vaga.findUnique({ where: { id: vagaId } });
-    if (!vaga) throw new Error("Vaga não encontrada");
+    await prisma.vagaAcessibilidade.deleteMany({ where: { vagaId } });
 
-    return VagasRepo.linkAcessibilidades(vagaId, acessibilidadeIds);
+    if (!acessibilidadeIds.length) return;
+
+    await prisma.vagaAcessibilidade.createMany({
+      data: acessibilidadeIds.map((acessibilidadeId) => ({
+        vagaId,
+        acessibilidadeId,
+      })),
+      skipDuplicates: true,
+    });
   },
 
-    async listarAcessibilidadesPossiveis(vagaId: number) {
-    const vaga = await VagasRepo.findByIdWithSubtiposBarreirasAcessibilidades(vagaId);
-    if (!vaga) throw new Error("Vaga não encontrada");
+  /**
+   * Acessibilidades "possíveis" para a vaga:
+   * - baseadas nos subtipos aceitos pela vaga
+   * - mapeando Subtipo -> Barreira -> Acessibilidade
+   * - exclui acessibilidades já vinculadas à vaga
+   */
+ async listarAcessibilidadesPossiveis(vagaId: number) {
+    const vaga = await prisma.vaga.findUnique({
+      where: { id: vagaId },
+      include: {
+        subtiposAceitos: { select: { subtipoId: true } },
+      },
+    });
 
-    // Junta todas as acessibilidades das barreiras dos subtipos da vaga
-    const acessibilidades = vaga.subtiposAceitos.flatMap((vs) =>
-      vs.subtipo.barreiras.flatMap((sb) =>
-        sb.barreira.acessibilidades.map((ba) => ba.acessibilidade)
-      )
-    );
+    if (!vaga) {
+      throw new Error("Vaga não encontrada");
+    }
 
-    // Remove duplicadas
-    const unicas = acessibilidades.filter(
-      (a, i, arr) => arr.findIndex((x) => x.id === a.id) === i
-    );
+    const subtipoIds = vaga.subtiposAceitos.map((vs) => vs.subtipoId);
 
-    return unicas;
+    // Se a vaga não tem subtipos, pode devolver lista vazia ou todas.
+    // Aqui vou devolver TODAS, pra empresa poder escolher algo.
+    if (!subtipoIds.length) {
+      return prisma.acessibilidade.findMany({ orderBy: { id: "asc" } });
+    }
+
+    // Pega barreiras dos subtipos com suas acessibilidades
+    const links = await prisma.subtipoBarreira.findMany({
+      where: { subtipoId: { in: subtipoIds } },
+      include: {
+        barreira: {
+          include: {
+            acessibilidades: true, // BarreiraAcessibilidade[]
+          },
+        },
+      },
+    });
+
+    const acessIdsSet = new Set<number>();
+    for (const link of links) {
+      for (const ba of link.barreira.acessibilidades) {
+        acessIdsSet.add(ba.acessibilidadeId);
+      }
+    }
+
+    if (!acessIdsSet.size) {
+      return [];
+    }
+
+    const ids = Array.from(acessIdsSet);
+
+    const acess = await prisma.acessibilidade.findMany({
+      where: { id: { in: ids } },
+      orderBy: { id: "asc" },
+    });
+
+    return acess;
   },
 };

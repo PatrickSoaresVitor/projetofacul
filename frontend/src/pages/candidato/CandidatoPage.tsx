@@ -1,9 +1,7 @@
-import { NavLink, useParams } from "react-router-dom";
+import { NavLink, Outlet, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import type { Candidato } from "../../types";
-import CandidatoSubtiposForm from "../../components/candidato/CandidatoSubtiposForm";
-import CandidatoBarreirasForm from "../../components/candidato/CandidatoBarreirasForm";
 
 export default function CandidatoPage() {
   const { id } = useParams();
@@ -12,19 +10,19 @@ export default function CandidatoPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  async function carregar() {
-    setErro(null);
-    try {
-      const data = await api.getCandidato(candidatoId);
-      setCandidato(data);
-    } catch (err: any) {
-      setErro(err.message ?? "Erro ao carregar candidato");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    async function carregar() {
+      try {
+        setErro(null);
+        if (!Number.isFinite(candidatoId)) return;
+        const data = await api.getCandidato(candidatoId);
+        setCandidato(data);
+      } catch (err: any) {
+        setErro(err.message ?? "Erro ao carregar candidato");
+      } finally {
+        setLoading(false);
+      }
+    }
     carregar();
   }, [candidatoId]);
 
@@ -60,50 +58,79 @@ export default function CandidatoPage() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <div className="container-page space-y-6 py-8">
-        <header>
-          <nav className="flex flex-wrap gap-2 mb-4">
+      {/* Header com o candidato + navegação */}
+      <header className="bg-gradient-to-r from-primary to-secondary text-white">
+        <div className="container-page py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-lg font-semibold">
+              {candidato.nome}
+            </h1>
+            <p className="text-xs text-white/80 mt-1">
+              Escolaridade: {candidato.escolaridade || "Não informada"}
+            </p>
+            {candidato.email && (
+              <p className="text-xs text-white/80">{candidato.email}</p>
+            )}
+          </div>
+
+          <nav className="flex flex-wrap gap-2">
             <NavLink
               to={`/candidato/${candidatoId}`}
               end
               className={({ isActive }) =>
-                ["btn text-xs sm:text-sm", isActive ? "btn-primary" : ""].join(" ")
+                [
+                  "btn text-xs sm:text-sm",
+                  isActive
+                    ? "btn-primary"
+                    : "bg-white/90 text-slate-700 border-transparent hover:bg-white",
+                ].join(" ")
               }
             >
-              Subtipos e Barreiras
+              Visão geral
+            </NavLink>
+
+            <NavLink
+              to={`/candidato/${candidatoId}/perfil`}
+              className={({ isActive }) =>
+                [
+                  "btn text-xs sm:text-sm",
+                  isActive
+                    ? "btn-primary"
+                    : "bg-white/90 text-slate-700 border-transparent hover:bg-white",
+                ].join(" ")
+              }
+            >
+              Subtipos e barreiras
             </NavLink>
 
             <NavLink
               to={`/candidato/${candidatoId}/vagas`}
               className={({ isActive }) =>
-                ["btn text-xs sm:text-sm", isActive ? "btn-primary" : ""].join(" ")
+                [
+                  "btn text-xs sm:text-sm",
+                  isActive
+                    ? "btn-primary"
+                    : "bg-white/90 text-slate-700 border-transparent hover:bg-white",
+                ].join(" ")
               }
             >
-              Minhas vagas
+              Vagas compatíveis
             </NavLink>
 
             <NavLink
-              to={`/`}
-              className="btn text-xs sm:text-sm"
+              to="/home"
+              className="btn text-xs sm:text-sm bg-white/90 text-slate-700 border-transparent hover:bg-white"
             >
               SAIR
             </NavLink>
           </nav>
-          <h1 className="text-2xl font-bold">Candidato: {candidato.nome}</h1> 
-          <h1 className="text-2xl font-bold">Escolaridade: {candidato.escolaridade}</h1> 
-          <p className="text-gray-600">Configure seus subtipos e barreiras.</p>
-        </header>
+        </div>
+      </header>
 
-        <CandidatoSubtiposForm candidatoId={candidatoId} onUpdated={carregar} />
-
-        {candidato.subtipos?.map((s) => (
-          <CandidatoBarreirasForm
-            key={s.subtipoId}
-            candidatoId={candidatoId}
-            subtipo={s.subtipo}
-          />
-        ))}
-      </div>
+      {/* Conteúdo das rotas filhas */}
+      <main className="container-page py-8">
+        <Outlet />
+      </main>
     </div>
   );
 }

@@ -64,6 +64,18 @@ export default function EmpresaPage() {
 
           <nav className="flex flex-wrap gap-2">
             <NavLink
+              to={`/empresa/${empresa.id}`}
+              end
+              className={({ isActive }) =>
+                [
+                  "btn text-xs sm:text-sm",
+                  isActive ? "btn-primary" : "bg-white/90 text-slate-700 border-transparent hover:bg-white",
+                ].join(" ")
+              }
+            >
+              Home
+            </NavLink>
+            <NavLink
               to={`/empresa/${empresa.id}/vagas`}
               className={({ isActive }) =>
                 [

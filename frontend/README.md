@@ -1,69 +1,150 @@
-# React + TypeScript + Vite
+# 🌐 IncluiVagas Web  
+### Interface para Gestão de Vagas, Candidatos e Empresas  
+**“Inclusão inteligente, simples e acessível.”**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+## 📋 Índice
+- [Sobre o Projeto](#sobre-o-projeto)
+- [Tecnologias](#tecnologias)
+- [Instalação](#instalação)
+- [Pasta do Projeto](#pasta-do-projeto)
+- [Funcionalidades](#funcionalidades)
+- [Arquitetura do Front](#arquitetura-do-front)
+- [Ambiente (.env)](#ambiente)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## 📌 Sobre o Projeto
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+O **IncluiVagas Web** é o front-end oficial da plataforma IncluiVagas.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Ele foi criado para oferecer uma interface:
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- moderna  
+- responsiva  
+- intuitiva  
+- acessível  
+- eficiente para navegação de empresas e candidatos PCD  
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Todo o fluxo está alinhado com boas práticas de UX e totalmente integrado ao backend IncluiVagas API.
+
+---
+
+## 🛠 Tecnologias
+
+- **React + TypeScript**
+- **Vite**
+- **TailwindCSS**
+- **React Router DOM**
+- **Fetch API**
+- **Componentização inteligente**
+
+---
+
+## ⚙ Instalação
+
+### 1. Instalar dependências
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. Executar o projeto
+```bash
+npm run dev
 ```
+
+A aplicação abre em:  
+`http://localhost:5173/`
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+frontend/
+ ├── src/
+ │    ├── pages/
+ │    │     ├── home/
+ │    │     ├── admin/
+ │    │     ├── candidato/
+ │    │     ├── empresa/
+ │    │
+ │    ├── components/
+ │    ├── lib/api.ts
+ │    ├── assets/
+ │    ├── App.tsx
+ │    ├── main.tsx
+ │
+ ├── index.html
+ ├── tailwind.config.js
+ ├── package.json
+ ├── README.md
+```
+
+---
+
+## ⭐ Funcionalidades
+
+### **🔐 Autenticação**
+- Login único para Empresa, Candidato e Admin
+
+---
+
+### **👤 Candidato**
+- Painel geral com vagas compatíveis  
+- Subtipos configurados  
+- Barreiras selecionadas  
+- Candidaturas realizadas  
+- Perfil completo  
+
+---
+
+### **🏢 Empresa**
+- Dashboard  
+- Minhas vagas  
+- Criar vaga  
+- Candidatos que deram match  
+- Acompanhamento de candidaturas  
+
+---
+
+### **🛠 Admin**
+- CRUD completo:
+  - Tipos
+  - Subtipos
+  - Barreiras
+  - Acessibilidades
+- Painel de visão geral
+
+---
+
+## 🧭 Arquitetura do Front
+
+Componentização por responsabilidade:
+
+- `components/empresa/*`
+- `components/candidato/*`
+- `pages/empresa/*`
+- `pages/candidato/*`
+- `pages/admin/*`
+- `lib/api.ts` centraliza chamadas
+
+---
+
+## 🔧 Ambiente (.env)
+
+Criar arquivo:
+
+```
+VITE_API_URL=http://localhost:3000
+```
+
+---
+
+# 🎯 Conclusão
+
+O front-end IncluiVagas Web entrega uma UI limpa, moderna, acessível e alinhada ao propósito do projeto: **facilitar a inclusão real de pessoas com deficiência no mercado de trabalho**.
+
+---
+

@@ -8,6 +8,7 @@ export default function BarreirasPage() {
   const [barreiras, setBarreiras] = useState<Barreira[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [excluindoId, setExcluindoId] = useState<number | null>(null);
 
   async function carregar() {
     setErro(null);
@@ -25,6 +26,25 @@ export default function BarreirasPage() {
   useEffect(() => {
     carregar();
   }, []);
+
+  // 🔹 NOVO: excluir barreira
+  async function handleExcluir(id: number) {
+    const ok = window.confirm(
+      "Tem certeza que deseja excluir esta barreira? Os vínculos com subtipos e candidatos serão removidos."
+    );
+    if (!ok) return;
+
+    try {
+      setErro(null);
+      setExcluindoId(id);
+      await api.excluirBarreira(id);
+      await carregar();
+    } catch (e: any) {
+      setErro(e.message ?? "Erro ao excluir barreira");
+    } finally {
+      setExcluindoId(null);
+    }
+  }
 
   return (
     <div className="container-page space-y-6 py-8">
@@ -47,9 +67,23 @@ export default function BarreirasPage() {
           <h3 className="text-lg font-semibold mb-3">Barreiras cadastradas</h3>
           <ul className="divide-y">
             {barreiras.map((b) => (
-              <li key={b.id} className="py-2 flex justify-between">
+              <li
+                key={b.id}
+                className="py-2 flex items-center justify-between text-sm"
+              >
                 <span>{b.descricao}</span>
-                <span className="text-xs text-gray-400">#{b.id}</span>
+
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span className="text-gray-400">#{b.id}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleExcluir(b.id)}
+                    disabled={excluindoId === b.id}
+                    className="text-red-600 hover:text-red-700 font-medium"
+                  >
+                    {excluindoId === b.id ? "Excluindo..." : "Excluir"}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

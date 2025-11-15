@@ -13,13 +13,22 @@ export default function AdminPage() {
       <header className="bg-gradient-to-r from-primary to-secondary text-white shadow">
         <div className="container-page py-4 flex items-center justify-between gap-4">
           <h1 className="text-xl font-bold">
-            <NavLink
-              to="/admin"
-            >
+            <NavLink to="/admin" end>
               Administração
-            </NavLink></h1>
+            </NavLink>
+          </h1>
 
           <nav className="flex gap-2 flex-wrap">
+            <NavLink
+              to="/admin"
+              end
+              className={({ isActive }) =>
+                `${linkBase} ${isActive ? linkActive : linkInactive}`
+              }
+            >
+              Home
+            </NavLink>
+
             <NavLink
               to="/admin/tipos"
               className={({ isActive }) =>
